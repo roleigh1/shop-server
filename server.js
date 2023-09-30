@@ -87,7 +87,7 @@ function sendMail() {
     };
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.log("Fehler beim Senden der Email");
+            console.log(error);
         } else {
             console.log("Email gesendet:", info.response);
         }
