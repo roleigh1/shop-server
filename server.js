@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const mysql = require("mysql"); 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = require('stripe')(stripeSecretKey);
 const express = require('express');
@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const nodemailer = require("nodemailer");
 const app = express();
+const Decimal = require('decimal.js');
 
 app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public'));
 app.use(cors());
@@ -20,6 +21,13 @@ let transporter = nodemailer.createTransport({
         pass: process.env.GMAIL_PASS
     }
 });
+const pool = mysql.createPool({
+    host:"localhost",
+    user:"root",
+    password:process.env.MYSQL_PASSWORD,
+    database:"shopDB"
+});
+
 
 // Middleware für den Checkout-Endpunkt
 app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
@@ -29,13 +37,15 @@ app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
             return res.status(400).json({ error: 'Warenkorb nicht gefunden' });
         }
         const line_items = warenkorb.map(item => {
+            const unitAmount = new Decimal(item.price).mul(100).toNumber();
             return {
                 price_data: {
                     currency: 'eur',
                     product_data: {
-                        name: item.name
+                        name: item.name,
+        
                     },
-                    unit_amount: item.price * 100,
+                    unit_amount: unitAmount,
                 },
                 quantity: item.quantity
             };
@@ -46,6 +56,7 @@ app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
             success_url: `${YOUR_DOMAIN}?success=true`,
             cancel_url: `${YOUR_DOMAIN}?canceled=true`,
         });
+
         res.json({ url: session.url });
     } catch (error) {
         console.error("Fehler beim Erstellen der Checkout-Session:", error);
@@ -67,23 +78,62 @@ app.post('/webhook', express.raw({ type: 'application/json'}), (request, respons
     }
     switch (event.type) {
         case 'payment_intent.succeeded':
-            const checkoutSessionCompleted = event.data.object;
-           
+            const paymentIntentSucceeded = event.data.object;
+         
             console.log("payment successfull");
-            sendMail();
+       
             break;
+        case "checkout.session.completed":
+            const session = event.data.object;
+            const customerEmail = session.customer_details.email;
+            const customerName = session.customer_details.name;
+            const totalAmount = session.amount_total / 100; // in Euros for example
+            console.log("Kunden Name:", customerName);
+            console.log("Kunden-E-Mail:", customerEmail);
+            console.log("Gesamtbetrag:", totalAmount, "EUR");
+    
+            // To get the line items:
+            stripe.checkout.sessions.listLineItems(session.id, function(err, lineItems) {
+                if (err) {
+                    console.error("Fehler beim Abrufen der Artikel:", err);
+                } else {
+                    for (let item of lineItems.data) {
+                        console.log("Produkt:", item.description, "| Menge:", item.quantity);
+                    }
+                    insertSQL(customerEmail, customerName, totalAmount, lineItems.data);
+       
+                    
+                    sendMail();
+                }
+            });
+    
+           break;
         default:
             console.log(`Unhandled event type ${event.type}`);
     }
     response.send();
 });
+function insertSQL(CustomerEmail,customerName,totalAmount,items) {
+    
+        const itemsDescription = items.map(item => `${item.description}:${item.quantity}`).join(", ");
+        const queryText = `INSERT INTO orders(email, item, gesamtPreis, name) VALUES (?, ?, ?, ?)`;
+        const values = [CustomerEmail,itemsDescription,totalAmount,customerName]
+
+    pool.query(queryText, values, (err,res) => {
+        if(err) {
+            console.log("Mistake at insert in DB", err.stack);
+        } else {
+            console.log("Insert Sucessfull" , res.affectedRows);
+        }
+    })
+}
 
 function sendMail() {
     let mailOptions = {
         from: "robinl.leitner1@gmail.com",
         to: "robinl.leitner1@gmail.com",
-        subject: "Bezahlung erfolgt",
-        text: "Ihre Bezahlung wurde erfolgreich abgeschlossen"
+        subject: "Bestellung bei Gärtnerei Leitner",
+        text: "vielen dank"
     };
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
