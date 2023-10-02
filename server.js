@@ -1,5 +1,5 @@
 require('dotenv').config();
-const mysql = require("mysql"); 
+const mysql = require("mysql");
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = require('stripe')(stripeSecretKey);
 const express = require('express');
@@ -22,10 +22,10 @@ let transporter = nodemailer.createTransport({
     }
 });
 const pool = mysql.createPool({
-    host:"localhost",
-    user:"root",
-    password:process.env.MYSQL_PASSWORD,
-    database:"shopDB"
+    host: "localhost",
+    user: "root",
+    password: process.env.MYSQL_PASSWORD,
+    database: "shopDB"
 });
 
 
@@ -43,7 +43,7 @@ app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
                     currency: 'eur',
                     product_data: {
                         name: item.name,
-        
+
                     },
                     unit_amount: unitAmount,
                 },
@@ -67,7 +67,7 @@ app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
 const endpointSecret = process.env.ENDPOINT_SECRET;
 
 // Middleware für den Stripe Webhook-Endpunkt
-app.post('/webhook', express.raw({ type: 'application/json'}), (request, response, ) => {
+app.post('/webhook', express.raw({ type: 'application/json' }), (request, response,) => {
     const sig = request.headers['stripe-signature'];
     let event;
     try {
@@ -79,61 +79,55 @@ app.post('/webhook', express.raw({ type: 'application/json'}), (request, respons
     switch (event.type) {
         case 'payment_intent.succeeded':
             const paymentIntentSucceeded = event.data.object;
-         
+
             console.log("payment successfull");
-       
+
             break;
         case "checkout.session.completed":
             const session = event.data.object;
             const customerEmail = session.customer_details.email;
             const customerName = session.customer_details.name;
             const totalAmount = session.amount_total / 100; // in Euros for example
-            console.log("Kunden Name:", customerName);
-            console.log("Kunden-E-Mail:", customerEmail);
-            console.log("Gesamtbetrag:", totalAmount, "EUR");
-    
+
             // To get the line items:
-            stripe.checkout.sessions.listLineItems(session.id, function(err, lineItems) {
+            stripe.checkout.sessions.listLineItems(session.id, function (err, lineItems) {
                 if (err) {
                     console.error("Fehler beim Abrufen der Artikel:", err);
                 } else {
-                    for (let item of lineItems.data) {
-                        console.log("Produkt:", item.description, "| Menge:", item.quantity);
-                    }
                     insertSQL(customerEmail, customerName, totalAmount, lineItems.data);
-       
-                    
-                    sendMail();
                 }
             });
-    
-           break;
+            break;
         default:
             console.log(`Unhandled event type ${event.type}`);
     }
     response.send();
 });
-function insertSQL(CustomerEmail,customerName,totalAmount,items) {
-    
-        const itemsDescription = items.map(item => `${item.description}:${item.quantity}`).join(", ");
-        const queryText = `INSERT INTO orders(email, item, gesamtPreis, name) VALUES (?, ?, ?, ?)`;
-        const values = [CustomerEmail,itemsDescription,totalAmount,customerName]
+function insertSQL(CustomerEmail, customerName, totalAmount, lineItems) {
+    const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
+    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name) VALUES (?, ?, ?, ?)`;
+    const values = [CustomerEmail, itemsDescription, totalAmount, customerName];
 
-    pool.query(queryText, values, (err,res) => {
-        if(err) {
+    pool.query(queryText, values, (err, res) => {
+        if (err) {
             console.log("Mistake at insert in DB", err.stack);
         } else {
-            console.log("Insert Sucessfull" , res.affectedRows);
+            console.log("Insert Sucessfull", res.affectedRows);
+
+
+            const emailText = `Vielen Dank für Ihre Bestellung: ${itemsDescription}. Gesamtpreis: ${totalAmount}€`;
+            sendMail(CustomerEmail, emailText);
         }
-    })
+    });
 }
 
-function sendMail() {
+
+function sendMail(CustomerEmail, emailText) {
     let mailOptions = {
         from: "robinl.leitner1@gmail.com",
-        to: "robinl.leitner1@gmail.com",
+        to: CustomerEmail,
         subject: "Bestellung bei Gärtnerei Leitner",
-        text: "vielen dank"
+        text: emailText
     };
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
