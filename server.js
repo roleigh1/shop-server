@@ -115,7 +115,30 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems) {
             console.log("Insert Sucessfull", res.affectedRows);
 
 
-            const emailText = `Vielen Dank für Ihre Bestellung: ${itemsDescription}. Gesamtpreis: ${totalAmount}€`;
+            const emailText = `
+            <html>
+         
+               
+               <head>
+             
+              
+           </head>
+               <body>
+               <div > 
+                   <img class="head" src="logo.png" alt="logo" />
+               </div>
+                <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2rem;">
+                <h1>Vielen Dank für ihre Bestellung</h1>
+                <h2> Ihre Bestellung</h2>
+                <p>${itemsDescription}</p>
+                <p> Ihre bestellung ist am: .... von: 07:00 - 12:00 zum abholen am Karmilitermarkt </p>
+                </div>
+
+               </body>
+            </html>
+         
+            
+            `;
             sendMail(CustomerEmail, emailText);
         }
     });
@@ -127,7 +150,7 @@ function sendMail(CustomerEmail, emailText) {
         from: "robinl.leitner1@gmail.com",
         to: CustomerEmail,
         subject: "Bestellung bei Gärtnerei Leitner",
-        text: emailText
+        html: emailText
     };
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
