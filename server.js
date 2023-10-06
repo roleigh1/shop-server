@@ -116,28 +116,40 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems) {
 
 
             const emailText = `
-            <html>
-         
-               
-               <head>
-             
-              
-           </head>
-               <body>
-               <div > 
-                   <img class="head" src="logo.png" alt="logo" />
-               </div>
-                <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2rem;">
-                <h1>Vielen Dank für ihre Bestellung</h1>
-                <h2> Ihre Bestellung</h2>
-                <p>${itemsDescription}</p>
-                <p> Ihre bestellung ist am: .... von: 07:00 - 12:00 zum abholen am Karmilitermarkt </p>
-                </div>
+            <!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* Your CSS styles here */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    h1 {
+      color: #333;
+    }
+    p {
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hello, World!</h1>
+    <p>This is a nicely formatted email with CSS styles.</p>
+  </div>
+</body>
+</html> 
 
-               </body>
-            </html>
-         
-            
+
             `;
             sendMail(CustomerEmail, emailText);
         }
