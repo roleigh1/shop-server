@@ -143,8 +143,9 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems) {
 </head>
 <body>
   <div class="container">
-    <h1>Hello, World!</h1>
-    <p>This is a nicely formatted email with CSS styles.</p>
+    <h1>Vielen Dank für ihre bestellung!</h1>
+    <p>${itemsDescription}</p>
+    <p>${totalAmount}</p> 
   </div>
 </body>
 </html> 
