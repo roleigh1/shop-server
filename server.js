@@ -8,8 +8,9 @@ const cors = require('cors');
 const nodemailer = require("nodemailer");
 const app = express();
 const Decimal = require('decimal.js');
-
+ // let selectedDate = null;
 app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public'));
+
 app.use(cors());
 
 const YOUR_DOMAIN = 'http://localhost:3000';
@@ -27,8 +28,18 @@ const pool = mysql.createPool({
     password: process.env.MYSQL_PASSWORD,
     database: "shopDB"
 });
-
-
+/*
+app.post('/selected-date', (req, res) => {
+    console.log(req.body);
+    const { date } = req.body;
+    console.log('Received date:', date);
+    selectedDate = date; 
+ 
+  
+    res.json({ message: 'Date received!' });
+  });
+  
+*/
 // Middleware für den Checkout-Endpunkt
 app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
     try {
@@ -103,10 +114,10 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
     }
     response.send();
 });
-function insertSQL(CustomerEmail, customerName, totalAmount, lineItems) {
+function insertSQL(CustomerEmail, customerName, totalAmount, lineItems,/*selectedDate*/) {
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
-    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name) VALUES (?, ?, ?, ?)`;
-    const values = [CustomerEmail, itemsDescription, totalAmount, customerName];
+    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name) VALUES (?, ?, ?, ?, ?)`;
+    const values = [CustomerEmail, itemsDescription, totalAmount, customerName /*,selectedDate */];
 
     pool.query(queryText, values, (err, res) => {
         if (err) {
@@ -146,6 +157,7 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems) {
     <h1>Vielen Dank für ihre bestellung!</h1>
     <p>${itemsDescription}</p>
     <p>${totalAmount}</p> 
+    <p>${selectedDate}</p>
   </div>
 </body>
 </html> 
