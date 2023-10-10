@@ -8,7 +8,7 @@ const cors = require('cors');
 const nodemailer = require("nodemailer");
 const app = express();
 const Decimal = require('decimal.js');
- // let selectedDate = null;
+let selectedDate = null;
 app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public'));
 
 app.use(cors());
@@ -28,18 +28,18 @@ const pool = mysql.createPool({
     password: process.env.MYSQL_PASSWORD,
     database: "shopDB"
 });
-/*
-app.post('/selected-date', (req, res) => {
+
+app.post('/selected-date',bodyParser.json(), (req, res) => {
     console.log(req.body);
     const { date } = req.body;
     console.log('Received date:', date);
-    selectedDate = date; 
+    selectedDate = date.toString(); 
  
   
     res.json({ message: 'Date received!' });
   });
   
-*/
+
 // Middleware für den Checkout-Endpunkt
 app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
     try {
@@ -105,7 +105,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
                 if (err) {
                     console.error("Fehler beim Abrufen der Artikel:", err);
                 } else {
-                    insertSQL(customerEmail, customerName, totalAmount, lineItems.data);
+                    insertSQL(customerEmail, customerName, totalAmount, lineItems.data,selectedDate);
                 }
             });
             break;
@@ -114,10 +114,11 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
     }
     response.send();
 });
-function insertSQL(CustomerEmail, customerName, totalAmount, lineItems,/*selectedDate*/) {
+function insertSQL(CustomerEmail, customerName, totalAmount, lineItems,selectedDate) {
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
-    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name) VALUES (?, ?, ?, ?, ?)`;
-    const values = [CustomerEmail, itemsDescription, totalAmount, customerName /*,selectedDate */];
+    const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
+    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name,pickupdate) VALUES (?, ?, ?, ?, ?)`;
+    const values = [CustomerEmail, itemsDescription, totalAmount, customerName , mysqlFormattedDate];
 
     pool.query(queryText, values, (err, res) => {
         if (err) {
@@ -157,7 +158,7 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems,/*selecte
     <h1>Vielen Dank für ihre bestellung!</h1>
     <p>${itemsDescription}</p>
     <p>${totalAmount}</p> 
-    <p>${selectedDate}</p>
+    <p>${mysqlFormattedDate}</p>
   </div>
 </body>
 </html> 
