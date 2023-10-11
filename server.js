@@ -29,16 +29,16 @@ const pool = mysql.createPool({
     database: "shopDB"
 });
 
-app.post('/selected-date',bodyParser.json(), (req, res) => {
+app.post('/selected-date', bodyParser.json(), (req, res) => {
     console.log(req.body);
     const { date } = req.body;
     console.log('Received date:', date);
-    selectedDate = date.toString(); 
- 
-  
+    selectedDate = date.toString();
+
+
     res.json({ message: 'Date received!' });
-  });
-  
+});
+
 
 // Middleware für den Checkout-Endpunkt
 app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
@@ -105,7 +105,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
                 if (err) {
                     console.error("Fehler beim Abrufen der Artikel:", err);
                 } else {
-                    insertSQL(customerEmail, customerName, totalAmount, lineItems.data,selectedDate);
+                    insertSQL(customerEmail, customerName, totalAmount, lineItems.data, selectedDate);
                 }
             });
             break;
@@ -114,11 +114,11 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
     }
     response.send();
 });
-function insertSQL(CustomerEmail, customerName, totalAmount, lineItems,selectedDate) {
+function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate) {
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
     const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
     const queryText = `INSERT INTO orders(email, item, gesamtPreis, name,pickupdate) VALUES (?, ?, ?, ?, ?)`;
-    const values = [CustomerEmail, itemsDescription, totalAmount, customerName , mysqlFormattedDate];
+    const values = [CustomerEmail, itemsDescription, totalAmount, customerName, mysqlFormattedDate];
 
     pool.query(queryText, values, (err, res) => {
         if (err) {
@@ -151,14 +151,22 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems,selectedD
     p {
       color: #666;
     }
+    .description {
+        display:flex;
+        flex-direction:column;
+        justify-content:center; 
+    }
   </style>
 </head>
 <body>
-  <div class="container">
+<div class="container">
+  <div class="head">
+   <img src="cid:logo" alt="logo" />
+   </div>
     <h1>Vielen Dank für ihre bestellung!</h1>
-    <p>${itemsDescription}</p>
+    <p class="description">${itemsDescription}</p>
     <p>${totalAmount}</p> 
-    <p>${mysqlFormattedDate}</p>
+    <p>Ihre Bestellung ist am :${mysqlFormattedDate} von 08:00 - 13:00 bereit am Karmelitiermarkt zum abholen </p>
   </div>
 </body>
 </html> 
@@ -176,8 +184,14 @@ function sendMail(CustomerEmail, emailText) {
         from: "robinl.leitner1@gmail.com",
         to: CustomerEmail,
         subject: "Bestellung bei Gärtnerei Leitner",
-        html: emailText
+        html: emailText,
+        attachments: [{
+            filename: 'logo.png',
+            path: './logo.png',
+            cid: 'logo' 
+        }]
     };
+
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
             console.log(error);
