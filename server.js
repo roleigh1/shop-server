@@ -9,6 +9,7 @@ const nodemailer = require("nodemailer");
 const app = express();
 const Decimal = require('decimal.js');
 let selectedDate = null;
+
 app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public'));
 
 app.use(cors());
@@ -37,6 +38,12 @@ app.post('/selected-date', bodyParser.json(), (req, res) => {
 
 
     res.json({ message: 'Date received!' });
+});
+app.post("/selected-location", bodyParser.json(),(req, res) => {
+    const location = req.body.value;
+    console.log("Reveived value:", location);
+
+    res.json({ message: "Data recieved successfully" });
 });
 
 
@@ -114,7 +121,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
     }
     response.send();
 });
-function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate) {
+function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, ) {
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
     const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
     const queryText = `INSERT INTO orders(email, item, gesamtPreis, name,pickupdate) VALUES (?, ?, ?, ?, ?)`;
@@ -188,7 +195,7 @@ function sendMail(CustomerEmail, emailText) {
         attachments: [{
             filename: 'logo.png',
             path: './logo.png',
-            cid: 'logo' 
+            cid: 'logo'
         }]
     };
 
