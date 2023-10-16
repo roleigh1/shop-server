@@ -9,6 +9,7 @@ const nodemailer = require("nodemailer");
 const app = express();
 const Decimal = require('decimal.js');
 let selectedDate = null;
+let selectedLocation; 
 
 app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public'));
 
@@ -30,49 +31,47 @@ const pool = mysql.createPool({
     database: "shopDB"
 });
 
-app.post('/selected-date', bodyParser.json(), (req, res) => {
-    console.log(req.body);
-    const { date } = req.body;
-    console.log('Received date:', date);
-    selectedDate = date.toString();
 
-
-    res.json({ message: 'Date received!' });
-});
-app.post("/selected-location", bodyParser.json(),(req, res) => {
-    const location = req.body.value;
-    console.log("Reveived value:", location);
-
-    res.json({ message: "Data recieved successfully" });
-});
-
-
-// Middleware für den Checkout-Endpunkt
 app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
     try {
-        const warenkorb = req.body.warenkorb;
-        if (!warenkorb) {
-            return res.status(400).json({ error: 'Warenkorb nicht gefunden' });
+        const cart = req.body.cart;
+        const selectLocation = req.body.selectLocation;  
+        let pickupdate = req.body.selectedDate; 
+        selectedDate = pickupdate.toString();
+        selectedLocation = selectLocation; 
+        if (!cart) {
+            return res.status(400).json({ error: 'Cart not found' });
         }
-        const line_items = warenkorb.map(item => {
+
+        if (!selectLocation) {
+            return res.status(400).json({ error: 'Location not selected' });
+        }
+        if (!pickupdate) {
+            return res.status(400).json({ error:`'Pickup Date not selected`})
+        }
+        console.log(selectedDate);
+        console.log(selectedLocation);
+        const line_items = cart.map(item => {
             const unitAmount = new Decimal(item.price).mul(100).toNumber();
             return {
                 price_data: {
                     currency: 'eur',
                     product_data: {
                         name: item.name,
-
                     },
                     unit_amount: unitAmount,
                 },
                 quantity: item.quantity
             };
         });
+
+
         const session = await stripe.checkout.sessions.create({
             line_items,
             mode: 'payment',
             success_url: `${YOUR_DOMAIN}?success=true`,
             cancel_url: `${YOUR_DOMAIN}?canceled=true`,
+        
         });
 
         res.json({ url: session.url });
@@ -112,7 +111,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
                 if (err) {
                     console.error("Fehler beim Abrufen der Artikel:", err);
                 } else {
-                    insertSQL(customerEmail, customerName, totalAmount, lineItems.data, selectedDate);
+                    insertSQL(customerEmail, customerName, totalAmount, lineItems.data, selectedDate, selectedLocation);
                 }
             });
             break;
@@ -121,11 +120,11 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
     }
     response.send();
 });
-function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, ) {
+function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate,selectedLocation ) {
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
     const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
-    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name,pickupdate) VALUES (?, ?, ?, ?, ?)`;
-    const values = [CustomerEmail, itemsDescription, totalAmount, customerName, mysqlFormattedDate];
+    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name,pickupdate,location) VALUES (?, ?, ?, ?, ?, ?)`;
+    const values = [CustomerEmail, itemsDescription, totalAmount, customerName, mysqlFormattedDate,selectedLocation];
 
     pool.query(queryText, values, (err, res) => {
         if (err) {
@@ -173,7 +172,7 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
     <h1>Vielen Dank für ihre bestellung!</h1>
     <p class="description">${itemsDescription}</p>
     <p>${totalAmount}</p> 
-    <p>Ihre Bestellung ist am :${mysqlFormattedDate} von 08:00 - 13:00 bereit am Karmelitiermarkt zum abholen </p>
+    <p>Ihre Bestellung ist am :${mysqlFormattedDate} von 08:00 - 13:00 bereit am ${selectedLocation} zum abholen </p>
   </div>
 </body>
 </html> 
