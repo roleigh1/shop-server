@@ -1,5 +1,6 @@
 require('dotenv').config();
 const mysql = require("mysql");
+const {google} = require('googleapis');
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = require('stripe')(stripeSecretKey);
 const express = require('express');
@@ -8,8 +9,16 @@ const cors = require('cors');
 const nodemailer = require("nodemailer");
 const app = express();
 const Decimal = require('decimal.js');
+const config = require("./config");
+const OAuth2 = google.auth.OAuth2;
+
+const OAuth2_client = new OAuth2(config.clientId, config.clientSecret)
+OAuth2_client.setCredentials({ refresh_token: config.refreshToken });
+
+
+
 let selectedDate = null;
-let selectedLocation; 
+let selectedLocation;
 
 app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public'));
 
@@ -17,13 +26,6 @@ app.use(cors());
 
 const YOUR_DOMAIN = 'http://localhost:3000';
 
-let transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS
-    }
-});
 const pool = mysql.createPool({
     host: "localhost",
     user: "root",
@@ -35,10 +37,10 @@ const pool = mysql.createPool({
 app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
     try {
         const cart = req.body.cart;
-        const selectLocation = req.body.selectLocation;  
-        let pickupdate = req.body.selectedDate; 
+        const selectLocation = req.body.selectLocation;
+        let pickupdate = req.body.selectedDate;
         selectedDate = pickupdate.toString();
-        selectedLocation = selectLocation; 
+        selectedLocation = selectLocation;
         if (!cart) {
             return res.status(400).json({ error: 'Cart not found' });
         }
@@ -47,7 +49,7 @@ app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
             return res.status(400).json({ error: 'Location not selected' });
         }
         if (!pickupdate) {
-            return res.status(400).json({ error:`'Pickup Date not selected`})
+            return res.status(400).json({ error: `'Pickup Date not selected` })
         }
         console.log(selectedDate);
         console.log(selectedLocation);
@@ -71,7 +73,7 @@ app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
             mode: 'payment',
             success_url: `${YOUR_DOMAIN}?success=true`,
             cancel_url: `${YOUR_DOMAIN}?canceled=true`,
-        
+
         });
 
         res.json({ url: session.url });
@@ -120,11 +122,11 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
     }
     response.send();
 });
-function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate,selectedLocation ) {
+function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, selectedLocation) {
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
     const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
     const queryText = `INSERT INTO orders(email, item, gesamtPreis, name,pickupdate,location) VALUES (?, ?, ?, ?, ?, ?)`;
-    const values = [CustomerEmail, itemsDescription, totalAmount, customerName, mysqlFormattedDate,selectedLocation];
+    const values = [CustomerEmail, itemsDescription, totalAmount, customerName, mysqlFormattedDate, selectedLocation];
 
     pool.query(queryText, values, (err, res) => {
         if (err) {
@@ -186,6 +188,22 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
 
 
 function sendMail(CustomerEmail, emailText) {
+    const accesToken = OAuth2_client.getAccessToken()
+
+
+    let transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            type: "OAuth2",
+            user: config.user,
+            clientId: config.clientId,
+            clientSecret: config.clientSecret,
+            refreshToken: config.refreshToken,
+            accessToken: accesToken
+
+        }
+    });
+
     let mailOptions = {
         from: "robinl.leitner1@gmail.com",
         to: CustomerEmail,
