@@ -140,42 +140,185 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
 <html>
 <head>
   <style>
-    /* Your CSS styles here */
-    body {
+  .head {
+    display:flex; 
+    text-align: center;
+    justify-content:center;
+    flex-direction:column;
+    align-items:center;
+  }
+  .logo {
+    width:8rem;
+      margin-top:1rem;
+  
+  }
+  h2{
+    text-align: center;
+    margin-top:3rem;
+  }
+  .cu_data {
+    display: flex;
+    flex-direction: row;
+    justify-content:center;
+    align-items:center;
+    gap:5rem
+  }
+  .data_one {
+    display: flex;
+    flex-direction: column;
+    justify-content:center;
+    align-items:center;
+  }
+  
+  .data_one h4 {
+    margin-bottom: 2px;
+  }
+  
+  .data_one p {
+    margin: 0;
+    margin-bottom: 2px;
+  }
+  .table {
+    display:flex;
+    justify-content:center;
+    margin-top:2rem
+    
+  }
+   th, td {
+      
+      padding: 1rem;
+      text-align: left;
+    }
+  
+  
+  .total {
+    display:flex;
+    justify-content:center;
+  }
+  footer {
       font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #ffffff;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-    h1 {
-      color: #333;
-    }
-    p {
-      color: #666;
-    }
-    .description {
-        display:flex;
-        flex-direction:column;
-        justify-content:center; 
-    }
+      padding: 20px 0;
+      background-color: #f9f9f9;
+  }
+  
+  .footer-container {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 5%;
+  }
+  
+  .footer-section {
+      flex: 1;
+      padding: 0 20px;
+  }
+  
+  .footer-section h4 {
+      margin-top: 0;
+  }
+  
+  .footer-section ul {
+      list-style: none;
+      padding: 0;
+  }
+  
+  .footer-section ul li {
+      margin-bottom: 5px;
+  }
+  
+  .footer-bottom {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+  }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="head">
-   <img src="cid:logo" alt="logo" />
-   </div>
-    <h1>Vielen Dank für ihre bestellung!</h1>
-    <p class="description">${itemsDescription}</p>
-    <p>${totalAmount}</p> 
-    <p>Ihre Bestellung ist am :${mysqlFormattedDate} von 08:00 - 13:00 bereit am ${selectedLocation} zum abholen </p>
+<div class="head">
+<img class="logo" src="https://i.ibb.co/LZCgP2X/logo.png"  />
+  <h2>Vielen Dank für ihre Bestellung</h2>
+ 
+</div>
+<hr color="black" size="1px" width='80%' />
+<div class="cu_data">
+  <div class="data_one">
+   <h4>Rechnungsdaten</h4>
+    <p>Max Mustermann</p>
+    <p>Maxmuster@web.de<p> 
   </div>
+  <div class="data_one"> 
+  <h4>Abhol infos</h4>
+    <p>Karmelitermarkt</p>
+    <p>2011-01-01<p>
+  </div>
+  
+</div> 
+<table class="table">
+  <tr>
+    <th>Artikelnummer</th>
+    <th>Artikelname</th>
+    <th>Preis</th>
+    <th>Anzahl</th>
+    <th>Gesamtpreis</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>T-Shirt</td>
+    <td>20,00 €</td>
+    <td>2</td>
+    <td>40,00 €</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Jeans</td>
+    <td>50,00 €</td>
+    <td>1</td>
+    <td>50,00 €</td>
+  </tr>
+  
+  <tr>
+    <td>3</td>
+    <td>Schuhe</td>
+    <td>80,00 €</td>
+    <td>1</td>
+    <td>80,00 €</td>
+  </tr>
+
+</table>
+
+<hr color="black" size="1px" width='80%' />
+<div class="total">
+  <p>Gesamtpreis:</p>
+  <p> € 177.00</p>
+</div>
+<footer>
+    <div class="footer-container">
+        <div class="footer-section">
+            <h4>Gärtnerei Leitner: Frisches Gemüse für Wiens Märkte</h4>
+            <p>Mitten im Herzen von Simmering, einem lebhaften Bezirk in Wien, blüht eine besondere Gärtnerei. Hier, geschützt von der Hektik der Stadt, wachsen knackige Salate, aromatische Kräuter und bunte Gemüsesorten, die jeden Gaumen begeistern.</p>
+        </div>
+        <div class="footer-section">
+            <h4>Useful links</h4>
+            <ul>
+                <li>Products</li>
+                <li>Contact us</li>
+                <li>Impressum</li>
+            </ul>
+        </div>
+        <div class="footer-section">
+            <h4>Contact</h4>
+            <ul>
+                <li>🏠 Vienna, Vie 1110, AT</li>
+                <li>📧 info@GaertnereiLeitner.com</li>
+                <li>📞 +01 234 567 88</li>
+                <li>📠 +01 234 567 89</li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        Developed @RoLeigh
+    </div>
+</footer>
+
 </body>
 </html> 
 
