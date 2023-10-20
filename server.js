@@ -125,202 +125,88 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
 function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, selectedLocation) {
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
     const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
-    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name,pickupdate,location) VALUES (?, ?, ?, ?, ?, ?)`;
+    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name, pickupdate, location) VALUES (?, ?, ?, ?, ?, ?)`;
     const values = [CustomerEmail, itemsDescription, totalAmount, customerName, mysqlFormattedDate, selectedLocation];
 
     pool.query(queryText, values, (err, res) => {
         if (err) {
             console.log("Mistake at insert in DB", err.stack);
         } else {
-            console.log("Insert Sucessfull", res.affectedRows);
+            console.log("Insert Successful", res.affectedRows);
 
+            const tableRows = lineItems.map((item, index) => `
+                <tr>
+              
+                    <td>${item.description}</td>
+                    <td>${item.price}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.price * item.quantity}</td>
+                </tr>
+            `).join('');
 
             const emailText = `
             <!DOCTYPE html>
-<html>
-<head>
-  <style>
-  .head {
-    display:flex; 
-    text-align: center;
-    justify-content:center;
-    flex-direction:column;
-    align-items:center;
-  }
-  .logo {
-    width:8rem;
-      margin-top:1rem;
-  
-  }
-  h2{
-    text-align: center;
-    margin-top:3rem;
-  }
-  .cu_data {
-    display: flex;
-    flex-direction: row;
-    justify-content:center;
-    align-items:center;
-    gap:5rem
-  }
-  .data_one {
-    display: flex;
-    flex-direction: column;
-    justify-content:center;
-    align-items:center;
-  }
-  
-  .data_one h4 {
-    margin-bottom: 2px;
-  }
-  
-  .data_one p {
-    margin: 0;
-    margin-bottom: 2px;
-  }
-  .table {
-    display:flex;
-    justify-content:center;
-    margin-top:2rem
-    
-  }
-   th, td {
-      
-      padding: 1rem;
-      text-align: left;
-    }
-  
-  
-  .total {
-    display:flex;
-    justify-content:center;
-  }
-  footer {
-      font-family: Arial, sans-serif;
-      padding: 20px 0;
-      background-color: #f9f9f9;
-  }
-  
-  .footer-container {
-      display: flex;
-      justify-content: space-between;
-      padding: 0 5%;
-  }
-  
-  .footer-section {
-      flex: 1;
-      padding: 0 20px;
-  }
-  
-  .footer-section h4 {
-      margin-top: 0;
-  }
-  
-  .footer-section ul {
-      list-style: none;
-      padding: 0;
-  }
-  
-  .footer-section ul li {
-      margin-bottom: 5px;
-  }
-  
-  .footer-bottom {
-      text-align: center;
-      padding-top: 20px;
-      border-top: 1px solid #ddd;
-  }
-  </style>
-</head>
-<body>
-<div class="head">
-<img class="logo" src="https://i.ibb.co/LZCgP2X/logo.png"  />
-  <h2>Vielen Dank für ihre Bestellung</h2>
- 
-</div>
-<hr color="black" size="1px" width='80%' />
-<div class="cu_data">
-  <div class="data_one">
-   <h4>Rechnungsdaten</h4>
-    <p>Max Mustermann</p>
-    <p>Maxmuster@web.de<p> 
-  </div>
-  <div class="data_one"> 
-  <h4>Abhol infos</h4>
-    <p>Karmelitermarkt</p>
-    <p>2011-01-01<p>
-  </div>
-  
-</div> 
-<table class="table">
-  <tr>
-    <th>Artikelnummer</th>
-    <th>Artikelname</th>
-    <th>Preis</th>
-    <th>Anzahl</th>
-    <th>Gesamtpreis</th>
-  </tr>
-  <tr>
-    <td>1</td>
-    <td>T-Shirt</td>
-    <td>20,00 €</td>
-    <td>2</td>
-    <td>40,00 €</td>
-  </tr>
-  <tr>
-    <td>2</td>
-    <td>Jeans</td>
-    <td>50,00 €</td>
-    <td>1</td>
-    <td>50,00 €</td>
-  </tr>
-  
-  <tr>
-    <td>3</td>
-    <td>Schuhe</td>
-    <td>80,00 €</td>
-    <td>1</td>
-    <td>80,00 €</td>
-  </tr>
-
-</table>
-
-<hr color="black" size="1px" width='80%' />
-<div class="total">
-  <p>Gesamtpreis:</p>
-  <p> € 177.00</p>
-</div>
-<footer>
-    <div class="footer-container">
-        <div class="footer-section">
-            <h4>Gärtnerei Leitner: Frisches Gemüse für Wiens Märkte</h4>
-            <p>Mitten im Herzen von Simmering, einem lebhaften Bezirk in Wien, blüht eine besondere Gärtnerei. Hier, geschützt von der Hektik der Stadt, wachsen knackige Salate, aromatische Kräuter und bunte Gemüsesorten, die jeden Gaumen begeistern.</p>
-        </div>
-        <div class="footer-section">
-            <h4>Useful links</h4>
-            <ul>
-                <li>Products</li>
-                <li>Contact us</li>
-                <li>Impressum</li>
-            </ul>
-        </div>
-        <div class="footer-section">
-            <h4>Contact</h4>
-            <ul>
-                <li>🏠 Vienna, Vie 1110, AT</li>
-                <li>📧 info@GaertnereiLeitner.com</li>
-                <li>📞 +01 234 567 88</li>
-                <li>📠 +01 234 567 89</li>
-            </ul>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        Developed @RoLeigh
-    </div>
-</footer>
-
-</body>
-</html> 
+            <html lang="de">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Email Template</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f7f7f7;">
+            
+                <div style="background-color: #ffffff; border: 1px solid #ddd; padding: 20px; max-width: 600px; margin: 40px auto; text-align: center;">
+            
+                    <img class="logo" src="https://i.ibb.co/LZCgP2X/logo.png" />
+                    <h2 style="color: #333;">Vielen Dank für ihre Bestellung</h2>
+            
+                    <section style="margin: 20px 0;">
+                        <div>
+                            <strong>Rechnungsdaten</strong><br>
+                            ${customerName}<br>
+                            ${CustomerEmail}
+                        </div>
+                    </section>
+            
+                    <section style="margin: 20px 0;">
+                        <strong>Ihre Bestellung ist am ${mysqlFormattedDate}</strong><br>
+                        am ${selectedLocation} von 07-12:00 zum abholen bereit.
+                    </section>
+            
+                    <table style="width: 100%; margin: 20px 0; border-collapse: collapse; text-align: left;">
+                        <tr>
+                            <th>Artikelnummer</th>
+                            <th>Artikelname</th>
+                            <th>Preis</th>
+                            <th>Anzahl</th>
+                            <th>Gesamtpreis</th>
+                        </tr>
+                        ${tableRows}
+                    </table>
+                    <strong>Gesamtpreis: € ${totalAmount}</strong>
+            
+                    <section style="margin: 20px 0;">
+                        <h3 style="color: #333;">Gärtnerei Leitner: Frisches Gemüse für Wiens Märkte</h3>
+                        <p>Mitten im Herzen von Simmering, einem lebhaften Bezirk in Wien, blüht eine besondere Gärtnerei. Hier, geschützt von der Hektik der Stadt, wachsen knackige Salate, aromatische Kräuter und bunte Gemüsesorten, die jeden Gaumen be
+            
+                        <p>Mitten im Herzen von Simmering, einem lebhaften Bezirk in Wien, blüht eine besondere Gärtnerei. Hier, geschützt von der Hektik der Stadt, wachsen knackige Salate, aromatische Kräuter und bunte Gemüsesorten, die jeden Gaumen begeistern.</p>
+                    </section>
+            
+                    <footer style="margin-top: 20px;">
+                        <div style="text-align: center;">
+                        
+                            <div>
+                                <strong>Contact</strong>
+                                <p>Vienna, Vie 1110, AT</p>
+                                <p>info@GaertnereiLeitner.com</p>
+                                <p>+01 234 567 88</p>
+                                <p>+01 234 567 89</p>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </body>
+            </html>
+            
 
 
             `;
