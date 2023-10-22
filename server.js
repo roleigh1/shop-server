@@ -34,6 +34,8 @@ const pool = mysql.createPool({
 });
 
 
+
+
 app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
     try {
         const cart = req.body.cart;
@@ -107,7 +109,8 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
             const customerEmail = session.customer_details.email;
             const customerName = session.customer_details.name;
             const totalAmount = session.amount_total / 100; // in Euros for example
-
+           
+            
             // To get the line items:
             stripe.checkout.sessions.listLineItems(session.id, function (err, lineItems) {
                 if (err) {
@@ -134,15 +137,22 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
         } else {
             console.log("Insert Successful", res.affectedRows);
 
-            const tableRows = lineItems.map((item, index) => `
+            const tableRows = lineItems.map((item) => {
+                const unitAmount = new Decimal(item.price.unit_amount).div(100).toNumber();
+                console.log(unitAmount);
+                return  `
+            
                 <tr>
               
                     <td>${item.description}</td>
-                    <td>${item.price}</td>
                     <td>${item.quantity}</td>
-                    <td>${item.price * item.quantity}</td>
+                    <td>€ ${unitAmount}</td>
+                    <td>€ ${unitAmount * item.quantity}</td>
+                   
+                    
+             
                 </tr>
-            `).join('');
+            `}).join('');
 
             const emailText = `
             <!DOCTYPE html>
@@ -168,30 +178,32 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
                     </section>
             
                     <section style="margin: 20px 0;">
-                        <strong>Ihre Bestellung ist am ${mysqlFormattedDate}</strong><br>
-                        am ${selectedLocation} von 07-12:00 zum abholen bereit.
+                        <strong>Ihre Bestellung ist am ${mysqlFormattedDate}<br>
+                        bei unseren Stand auf dem ${selectedLocation} von 07-12:00 zum abholen bereit.</strong>
+                      
                     </section>
-            
-                    <table style="width: 100%; margin: 20px 0; border-collapse: collapse; text-align: left;">
+                    <hr size="1.5px" color="black" />
+                    <table style="width: 100%; margin: 20px 0; border-collapse: collapse; text-align: center;">
                         <tr>
-                            <th>Artikelnummer</th>
+                      
                             <th>Artikelname</th>
-                            <th>Preis</th>
                             <th>Anzahl</th>
+                            <th>Preis</th>
                             <th>Gesamtpreis</th>
                         </tr>
                         ${tableRows}
                     </table>
                     <strong>Gesamtpreis: € ${totalAmount}</strong>
-            
+                    <hr size="1.5px" color="black" />
+                    <footer style="margin-top: 20px;">
                     <section style="margin: 20px 0;">
                         <h3 style="color: #333;">Gärtnerei Leitner: Frisches Gemüse für Wiens Märkte</h3>
                         <p>Mitten im Herzen von Simmering, einem lebhaften Bezirk in Wien, blüht eine besondere Gärtnerei. Hier, geschützt von der Hektik der Stadt, wachsen knackige Salate, aromatische Kräuter und bunte Gemüsesorten, die jeden Gaumen be
             
                         <p>Mitten im Herzen von Simmering, einem lebhaften Bezirk in Wien, blüht eine besondere Gärtnerei. Hier, geschützt von der Hektik der Stadt, wachsen knackige Salate, aromatische Kräuter und bunte Gemüsesorten, die jeden Gaumen begeistern.</p>
                     </section>
-            
-                    <footer style="margin-top: 20px;">
+                 
+                    
                         <div style="text-align: center;">
                         
                             <div>
