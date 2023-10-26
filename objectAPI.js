@@ -1,50 +1,69 @@
-const express = require("express")
-const router = express.Router();
+require('dotenv').config();
+const express = require("express");
+
+const { Sequelize, DataTypes } = require("sequelize");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const port = 5555;
+
 const app = express();
-const cors = require('cors');
-
-
 app.use(cors());
-const items = [
-    {
-      id: 1,
-      name: 'Peaches',
-      price: 2.99,
-      image: 'https://i.ibb.co/Zm29fjS/peach-gbead77ccb-640.jpg',
-      type: 'Fruit'
-  },
-  {
-      id: 2,
-      name: 'Strawberrys',
-      price: 4.99,
-      image: 'https://i.ibb.co/S6sK3C7/strawberries-g91324ddda-640.jpg',
-      type: 'Fruit'
-  },
-  {
-      id: 3,
-      name: 'Paprika',
-      price: 1.00,
-      image: 'https://i.ibb.co/D7bBy1Q/bell-peppers-gc3855d807-640.jpg"',
-      type: 'Vegetable'
-  },
-  {
-      id: 4,
-      name: 'Eggplant',
-      price: 3.50,
-      image: 'https://i.ibb.co/p0QrGTJ/eggplant-gbd2ba8a1c-640.jpg',
-      type: 'Vegetable'
-  
-  }
-  ];
+app.use(bodyParser.json());
+
+const sequelize = new Sequelize('shopdb', 'root', process.env.MYSQL_PASSWORD, {
+    host: 'localhost',
+    dialect: 'mysql'
+});
+
+async function auth() {
+    try {
+        await sequelize.authenticate();
+        console.log('Connection has been established successfully.');
+    } catch (error) {
+        console.error('Unable to connect to the database:', error);
+    }
 
 
-
-
-module.exports = {
-    items,
-    infos,
-    products,
 }
-app.listen(5050, () => {
-    console.log('Server läuft auf Port 5050');
-})
+auth();
+const Info = sequelize.define('Info', {
+
+    name: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    },
+    text: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    },
+    image: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    }
+}, {
+        tableName:'infos'
+    })
+
+app.get('/infos', async (req, res) => {
+    try {
+        console.log('Fetching infos ...PS C:\shop-server> node objectAPI')
+        const infos = await Info.findAll();
+        res.json(infos);
+        console.log(infos);
+    
+    } catch (err) {
+        console.error("Error fetching infos:", err);
+        res.status(500).json({ message: 'Server Error'})
+    }
+});
+
+
+
+
+
+
+
+
+app.listen(port, () => {
+    console.log(`Server started on port ${port}`);
+});

@@ -266,9 +266,7 @@ function sendMail(CustomerEmail, emailText) {
     });
 }
 
-app.get('/', (req, res) => {
-    res.send('Willkommen zu meinem Express-Server!');
-});
+
 
 app.listen(4242, () => console.log('Running on port 4242'));
 

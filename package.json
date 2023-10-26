@@ -8,8 +8,10 @@
     "googleapis": "^127.0.0",
     "mongoose": "^7.5.3",
     "mysql": "^2.18.1",
+    "mysql2": "^3.6.2",
     "nodemailer": "^6.9.5",
     "pg": "^8.11.3",
+    "sequelize": "^6.33.0",
     "stripe": "^13.7.0"
   }
 }
