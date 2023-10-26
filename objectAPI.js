@@ -43,27 +43,81 @@ const Info = sequelize.define('Info', {
 }, {
         tableName:'infos'
     })
+const Item = sequelize.define('Item', {
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      price: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+      },
+      image: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      type: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      }
+}, {
+    tableName: 'items'
+})
+const Product = sequelize.define('Product', {
+    // attributes
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    price: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+    },
+    image: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+  }, {
+    tableName: 'products'
+  });
 
 app.get('/infos', async (req, res) => {
     try {
-        console.log('Fetching infos ...PS C:\shop-server> node objectAPI')
+        console.log('Fetching infos ...')
         const infos = await Info.findAll();
         res.json(infos);
-        console.log(infos);
+       
     
     } catch (err) {
         console.error("Error fetching infos:", err);
-        res.status(500).json({ message: 'Server Error'})
+        res.status(500).json({ message: 'Server Error'});
     }
 });
-
-
-
-
-
-
-
-
+app.get('/items', async (req,res) => {
+    try {
+        console.log('Fetching items ...')
+        const items = await Item.findAll();
+        res.json(items);
+    } catch (err) {
+        console.error("Error fetching items", err);
+        res.status(500).json({ message: 'Server Error'}); 
+    }
+    
+});
+app.get('/products', async (req,res) => {
+    try {
+        console.log('fetching products ...');
+        const products = await Product.findAll();
+        res.json(products);
+    } catch (err) {
+        console.error('Error fetching products');
+        res.status(500).json({ message: 'Server Error'});
+    }
+})
 app.listen(port, () => {
     console.log(`Server started on port ${port}`);
 });
