@@ -1,6 +1,7 @@
 require('dotenv').config();
+const { Sequelize, DataTypes } = require("sequelize");
 const mysql = require("mysql");
-const {google} = require('googleapis');
+const { google } = require('googleapis');
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = require('stripe')(stripeSecretKey);
 const express = require('express');
@@ -25,14 +26,45 @@ app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public
 app.use(cors());
 
 const YOUR_DOMAIN = 'http://localhost:3000';
-
-const pool = mysql.createPool({
-    host: "localhost",
-    user: "root",
-    password: process.env.MYSQL_PASSWORD,
-    database: "shopDB"
+const sequelize = new Sequelize(process.env.MYSQL_DATABASE, process.env.MYSQL_USER, process.env.MYSQL_PASSWORD, {
+    host: 'localhost',
+    dialect: 'mysql'
 });
+async function authDb() {
+    try {
+        await sequelize.authenticate();
+        console.log('Connection has been established successfully.');
+    } catch (error) {
+        console.error('Unable to connect to the database: ', error);
+    }
+}
+authDb();
 
+const Order = sequelize.define('Order', {
+    email: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    },
+    item: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    },
+    total: {
+        type: Sequelize.DataTypes.FLOAT,
+        allowNull: false,
+    },
+    pickupdate: {
+        type: Sequelize.DataTypes.DATE,
+        allowNull: false,
+    },
+    location: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    }
+
+}, {
+    tableName: 'orders'
+})
 
 
 
@@ -109,14 +141,15 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
             const customerEmail = session.customer_details.email;
             const customerName = session.customer_details.name;
             const totalAmount = session.amount_total / 100; // in Euros for example
-           
-            
+
+
             // To get the line items:
             stripe.checkout.sessions.listLineItems(session.id, function (err, lineItems) {
                 if (err) {
                     console.error("Fehler beim Abrufen der Artikel:", err);
                 } else {
                     insertSQL(customerEmail, customerName, totalAmount, lineItems.data, selectedDate, selectedLocation);
+                    console.log("Stripe response:", lineItems);
                 }
             });
             break;
@@ -125,22 +158,55 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
     }
     response.send();
 });
-function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, selectedLocation) {
+function sendMail(CustomerEmail, emailText) {
+    const accesToken = OAuth2_client.getAccessToken()
+
+
+    let transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            type: "OAuth2",
+            user: config.user,
+            clientId: config.clientId,
+            clientSecret: config.clientSecret,
+            refreshToken: config.refreshToken,
+            accessToken: accesToken
+
+        }
+    });
+
+    let mailOptions = {
+        from: "robinl.leitner1@gmail.com",
+        to: CustomerEmail,
+        subject: "Bestellung bei Gärtnerei Leitner",
+        html: emailText,
+        attachments: [{
+            filename: 'logo.png',
+            path: './logo.png',
+            cid: 'logo'
+        }]
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log("Email gesendet:", info.response);
+        }
+    });
+}
+
+function insertSQL(Order, CustomerEmail, customerName, totalAmount, lineItems, selectedDate, selectedLocation) {
+    if (!Array.isArray(lineItems)) {
+        console.error('lineItems is not an array:', lineItems);
+        return;
+    }
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
     const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
-    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name, pickupdate, location) VALUES (?, ?, ?, ?, ?, ?)`;
-    const values = [CustomerEmail, itemsDescription, totalAmount, customerName, mysqlFormattedDate, selectedLocation];
-
-    pool.query(queryText, values, (err, res) => {
-        if (err) {
-            console.log("Mistake at insert in DB", err.stack);
-        } else {
-            console.log("Insert Successful", res.affectedRows);
-
-            const tableRows = lineItems.map((item) => {
-                const unitAmount = new Decimal(item.price.unit_amount).div(100).toNumber();
-                console.log(unitAmount);
-                return  `
+    const tableRows = lineItems.map((item) => {
+        const unitAmount = new Decimal(item.price.unit_amount).div(100).toNumber();
+        console.log(unitAmount);
+        return `
             
                 <tr>
               
@@ -154,7 +220,7 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
                 </tr>
             `}).join('');
 
-            const emailText = `
+    const emailText = `
             <!DOCTYPE html>
             <html lang="de">
             <head>
@@ -222,49 +288,26 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
 
 
             `;
+    Order.sync().then(() => {
+        Order.create({
+            email: CustomerEmail,
+            item: itemsDescription,
+            total: totalAmount,
+            name: customerName,
+            pickupdate: selectedDate,
+            location: selectedLocation,
+        }).then(order => { 
+            console.log('Order created', order.dataValues)
             sendMail(CustomerEmail, emailText);
-        }
-    });
-}
+        }).catch(error => {
+            console.error('Error occured: ', error);
+        })
+    })
 
 
-function sendMail(CustomerEmail, emailText) {
-    const accesToken = OAuth2_client.getAccessToken()
+    
 
-
-    let transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            type: "OAuth2",
-            user: config.user,
-            clientId: config.clientId,
-            clientSecret: config.clientSecret,
-            refreshToken: config.refreshToken,
-            accessToken: accesToken
-
-        }
-    });
-
-    let mailOptions = {
-        from: "robinl.leitner1@gmail.com",
-        to: CustomerEmail,
-        subject: "Bestellung bei Gärtnerei Leitner",
-        html: emailText,
-        attachments: [{
-            filename: 'logo.png',
-            path: './logo.png',
-            cid: 'logo'
-        }]
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log("Email gesendet:", info.response);
-        }
-    });
-}
+    }
 
 
 
