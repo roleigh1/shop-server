@@ -33,6 +33,35 @@ const pool = mysql.createPool({
     database: "shopDB"
 });
 
+<<<<<<< Updated upstream
+=======
+const Order = sequelize.define('Order', {
+    email: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    },
+    item: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    },
+    total: {
+        type: Sequelize.DataTypes.FLOAT,
+        allowNull: false,
+    },
+    pickupdate: {
+        type: Sequelize.DataTypes.DATE,
+        allowNull: false,
+    },
+    location: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    }
+
+}, {
+    tableName: 'orders',
+    timestamps: true,
+})
+>>>>>>> Stashed changes
 
 
 
@@ -125,6 +154,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
     }
     response.send();
 });
+<<<<<<< Updated upstream
 function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, selectedLocation) {
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
     const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
@@ -141,6 +171,22 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
                 const unitAmount = new Decimal(item.price.unit_amount).div(100).toNumber();
                 console.log(unitAmount);
                 return  `
+=======
+
+function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, selectedLocation) {
+    console.log(typeof (lineItems));
+    console.log(lineItems)
+    const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
+    const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
+
+
+
+
+    const tableRows = lineItems.map((item) => {
+        const unitAmount = new Decimal(item.price.unit_amount).div(100).toNumber();
+        console.log(unitAmount);
+        return `
+>>>>>>> Stashed changes
             
                 <tr>
               
@@ -222,6 +268,7 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
 
 
             `;
+<<<<<<< Updated upstream
             sendMail(CustomerEmail, emailText);
         }
     });
@@ -265,7 +312,61 @@ function sendMail(CustomerEmail, emailText) {
         }
     });
 }
+=======
+            async function insert(CustomerEmail,itemsDescription,totalAmount,selectedDate,selectedLocation,Order){
+            const order = await Order.create({ 
+                email:CustomerEmail, item: itemsDescription,total:totalAmount, pickupdate:selectedDate,location: selectedLocation
+            })
+            return order
+        }
+    //sendMail(CustomerEmail, emailText);
+        insert(CustomerEmail,itemsDescription,totalAmount,selectedDate,selectedLocation,Order)
+        .then(order => {
+            console.log('Order inserted', order)
+        })
+        .catch(error => {
+            console.error('Error when inserting', error)
+        })
+}
 
+function sendMail(CustomerEmail, emailText) {
+    const accesToken = OAuth2_client.getAccessToken()
+
+
+    let transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            type: "OAuth2",
+            user: config.user,
+            clientId: config.clientId,
+            clientSecret: config.clientSecret,
+            refreshToken: config.refreshToken,
+            accessToken: accesToken
+
+        }
+    });
+>>>>>>> Stashed changes
+
+    let mailOptions = {
+        from: "robinl.leitner1@gmail.com",
+        to: CustomerEmail,
+        subject: "Bestellung bei Gärtnerei Leitner",
+        html: emailText,
+        attachments: [{
+            filename: 'logo.png',
+            path: './logo.png',
+            cid: 'logo'
+        }]
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log("Email gesendet:", info.response);
+        }
+    });
+}
 
 
 app.listen(4242, () => console.log('Running on port 4242'));
