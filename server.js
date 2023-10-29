@@ -120,7 +120,6 @@ app.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
 
 const endpointSecret = process.env.ENDPOINT_SECRET;
 
-// Middleware für den Stripe Webhook-Endpunkt
 app.post('/webhook', express.raw({ type: 'application/json' }), (request, response,) => {
     const sig = request.headers['stripe-signature'];
     let event;
@@ -160,7 +159,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
 });
 
 function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, selectedLocation) {
-    console.log(typeof (lineItems));
+    console.log(typeof(lineItems));
     console.log(lineItems)
     const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
     const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
