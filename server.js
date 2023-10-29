@@ -1,6 +1,7 @@
 require('dotenv').config();
+const { Sequelize, DataTypes } = require("sequelize");
 const mysql = require("mysql");
-const {google} = require('googleapis');
+const { google } = require('googleapis');
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = require('stripe')(stripeSecretKey);
 const express = require('express');
@@ -25,16 +26,20 @@ app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public
 app.use(cors());
 
 const YOUR_DOMAIN = 'http://localhost:3000';
-
-const pool = mysql.createPool({
-    host: "localhost",
-    user: "root",
-    password: process.env.MYSQL_PASSWORD,
-    database: "shopDB"
+const sequelize = new Sequelize(process.env.MYSQL_DATABASE, process.env.MYSQL_USER, process.env.MYSQL_PASSWORD, {
+    host: 'localhost',
+    dialect: 'mysql'
 });
+async function authDb() {
+    try {
+        await sequelize.authenticate();
+        console.log('Connection has been established successfully.');
+    } catch (error) {
+        console.error('Unable to connect to the database: ', error);
+    }
+}
+authDb();
 
-<<<<<<< Updated upstream
-=======
 const Order = sequelize.define('Order', {
     email: {
         type: Sequelize.DataTypes.STRING,
@@ -59,9 +64,8 @@ const Order = sequelize.define('Order', {
 
 }, {
     tableName: 'orders',
-    timestamps: true,
+    timestamps:'true'
 })
->>>>>>> Stashed changes
 
 
 
@@ -138,8 +142,8 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
             const customerEmail = session.customer_details.email;
             const customerName = session.customer_details.name;
             const totalAmount = session.amount_total / 100; // in Euros for example
-           
-            
+
+
             // To get the line items:
             stripe.checkout.sessions.listLineItems(session.id, function (err, lineItems) {
                 if (err) {
@@ -154,24 +158,6 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (request, respon
     }
     response.send();
 });
-<<<<<<< Updated upstream
-function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, selectedLocation) {
-    const itemsDescription = lineItems.map(item => `${item.description}:${item.quantity}`).join(", ");
-    const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
-    const queryText = `INSERT INTO orders(email, item, gesamtPreis, name, pickupdate, location) VALUES (?, ?, ?, ?, ?, ?)`;
-    const values = [CustomerEmail, itemsDescription, totalAmount, customerName, mysqlFormattedDate, selectedLocation];
-
-    pool.query(queryText, values, (err, res) => {
-        if (err) {
-            console.log("Mistake at insert in DB", err.stack);
-        } else {
-            console.log("Insert Successful", res.affectedRows);
-
-            const tableRows = lineItems.map((item) => {
-                const unitAmount = new Decimal(item.price.unit_amount).div(100).toNumber();
-                console.log(unitAmount);
-                return  `
-=======
 
 function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selectedDate, selectedLocation) {
     console.log(typeof (lineItems));
@@ -186,7 +172,6 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
         const unitAmount = new Decimal(item.price.unit_amount).div(100).toNumber();
         console.log(unitAmount);
         return `
->>>>>>> Stashed changes
             
                 <tr>
               
@@ -200,7 +185,7 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
                 </tr>
             `}).join('');
 
-            const emailText = `
+    const emailText = `
             <!DOCTYPE html>
             <html lang="de">
             <head>
@@ -268,58 +253,13 @@ function insertSQL(CustomerEmail, customerName, totalAmount, lineItems, selected
 
 
             `;
-<<<<<<< Updated upstream
-            sendMail(CustomerEmail, emailText);
-        }
-    });
-}
-
-
-function sendMail(CustomerEmail, emailText) {
-    const accesToken = OAuth2_client.getAccessToken()
-
-
-    let transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            type: "OAuth2",
-            user: config.user,
-            clientId: config.clientId,
-            clientSecret: config.clientSecret,
-            refreshToken: config.refreshToken,
-            accessToken: accesToken
-
-        }
-    });
-
-    let mailOptions = {
-        from: "robinl.leitner1@gmail.com",
-        to: CustomerEmail,
-        subject: "Bestellung bei Gärtnerei Leitner",
-        html: emailText,
-        attachments: [{
-            filename: 'logo.png',
-            path: './logo.png',
-            cid: 'logo'
-        }]
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log("Email gesendet:", info.response);
-        }
-    });
-}
-=======
-            async function insert(CustomerEmail,itemsDescription,totalAmount,selectedDate,selectedLocation,Order){
+            async function insert(CustomerEmail,itemsDescription,totalAmount,selectedDate,selectedLocation){
             const order = await Order.create({ 
                 email:CustomerEmail, item: itemsDescription,total:totalAmount, pickupdate:selectedDate,location: selectedLocation
             })
             return order
         }
-    //sendMail(CustomerEmail, emailText);
+         //sendMail(CustomerEmail, emailText);
         insert(CustomerEmail,itemsDescription,totalAmount,selectedDate,selectedLocation,Order)
         .then(order => {
             console.log('Order inserted', order)
@@ -345,7 +285,6 @@ function sendMail(CustomerEmail, emailText) {
 
         }
     });
->>>>>>> Stashed changes
 
     let mailOptions = {
         from: "robinl.leitner1@gmail.com",
@@ -370,12 +309,4 @@ function sendMail(CustomerEmail, emailText) {
 
 
 app.listen(4242, () => console.log('Running on port 4242'));
-
-
-
-
-
-
-
-
 
