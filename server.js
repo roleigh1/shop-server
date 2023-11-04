@@ -12,7 +12,8 @@ const app = express();
 const Decimal = require('decimal.js');
 const config = require("./config");
 const OAuth2 = google.auth.OAuth2;
-
+const { Order } = require('./models');
+const routes = require('./routes');
 const OAuth2_client = new OAuth2(config.clientId, config.clientSecret)
 OAuth2_client.setCredentials({ refresh_token: config.refreshToken });
 
@@ -40,32 +41,8 @@ async function authDb() {
 }
 authDb();
 
-const Order = sequelize.define('Order', {
-    email: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false,
-    },
-    item: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false,
-    },
-    total: {
-        type: Sequelize.DataTypes.FLOAT,
-        allowNull: false,
-    },
-    pickupdate: {
-        type: Sequelize.DataTypes.DATE,
-        allowNull: false,
-    },
-    location: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false,
-    }
-
-}, {
-    tableName: 'orders',
-    timestamps:'true'
-})
+// Content 
+app.use('/api', routes);
 
 
 
