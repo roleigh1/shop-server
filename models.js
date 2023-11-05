@@ -73,6 +73,7 @@ const Product = sequelize.define('Product', {
   }, {
     tableName: 'products'
   });
+
   const Order = sequelize.define('Order', {
     email: {
         type: Sequelize.DataTypes.STRING,
@@ -98,8 +99,28 @@ const Product = sequelize.define('Product', {
 }, {
     tableName: 'orders',
     timestamps:'true'
-})
-module.exports = 
+});
+
+
+const User = sequelize.define('Admin', {
+    username: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+    },
+    password: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull:false,
+    }
+}, 
 {
-     Order,Item,Product,Info
-};
+    tableName:'admin',
+    timestamps: false
+});
+
+module.exports = {
+    Info,
+    Item,
+    Product,
+    Order,
+    User
+}

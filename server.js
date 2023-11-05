@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { Sequelize, DataTypes } = require("sequelize");
 const mysql = require("mysql");
+const bcrypt = require('bcrypt'); 
 const { google } = require('googleapis');
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = require('stripe')(stripeSecretKey);
@@ -10,12 +11,13 @@ const cors = require('cors');
 const nodemailer = require("nodemailer");
 const app = express();
 const Decimal = require('decimal.js');
-const config = require("./config");
 const OAuth2 = google.auth.OAuth2;
 const { Order } = require('./models');
 const routes = require('./routes');
+const config = require("./config");
 const OAuth2_client = new OAuth2(config.clientId, config.clientSecret)
 OAuth2_client.setCredentials({ refresh_token: config.refreshToken });
+const { User } = require('./models')
 
 
 
@@ -27,19 +29,7 @@ app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public
 app.use(cors());
 
 const YOUR_DOMAIN = 'http://localhost:3000';
-const sequelize = new Sequelize(process.env.MYSQL_DATABASE, process.env.MYSQL_USER, process.env.MYSQL_PASSWORD, {
-    host: 'localhost',
-    dialect: 'mysql'
-});
-async function authDb() {
-    try {
-        await sequelize.authenticate();
-        console.log('Connection has been established successfully.');
-    } catch (error) {
-        console.error('Unable to connect to the database: ', error);
-    }
-}
-authDb();
+
 
 // Content 
 app.use('/api', routes);
@@ -282,6 +272,33 @@ function sendMail(CustomerEmail, emailText) {
         }
     });
 }
+
+const jwt = require('jsonwebtoken');
+// Login Route AdminTool 
+app.post('/login', bodyParser.json() ,async (req,res) => {
+    const {username, password} = req.body; 
+
+    try {
+        console.log('Suche Benutzer mit Username:', username);
+        const user = await User.findOne({ where:{ username } }); 
+        console.log('Gefundener Benutzer:', user);
+        if(!user) {
+            return res.status(401).json({ message: 'login failed'});
+        }
+        const match = await bcrypt.compare(password, user.password);
+        if(!match) {
+            return res.status(401).json({message: 'login failed'}); 
+
+        }
+        // if valid
+    
+        const token = jwt.sign({ userId: user.id }, 'asiDNLSdjAsdkf555',{expiresIn:'24h'});
+        return res.json({ token });
+    } catch(err) {
+        console.error(err); 
+        res.status(500).json({ message: 'serverError' , error: err.message});
+    }
+});
 
 
 app.listen(4242, () => console.log('Running on port 4242'));
