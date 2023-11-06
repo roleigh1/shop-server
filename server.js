@@ -13,7 +13,7 @@ const app = express();
 const Decimal = require('decimal.js');
 const OAuth2 = google.auth.OAuth2;
 const { Order } = require('./models');
-const routes = require('./routes');
+const routerData = require('./routes/dataRoutes')
 const config = require("./config");
 const OAuth2_client = new OAuth2(config.clientId, config.clientSecret)
 OAuth2_client.setCredentials({ refresh_token: config.refreshToken });
@@ -32,7 +32,7 @@ const YOUR_DOMAIN = 'http://localhost:3000';
 
 
 // Content 
-app.use('/api', routes);
+app.use('/api', routerData);
 
 
 
