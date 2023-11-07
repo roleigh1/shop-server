@@ -23,7 +23,7 @@ const { User } = require('./models')
 
 let selectedDate = null;
 let selectedLocation;
-
+ 
 app.use(express.static('C:\\Users\\Robin\\OneDrive\\Desktop\\react\\shop\\public'));
 
 app.use(cors());
@@ -272,33 +272,6 @@ function sendMail(CustomerEmail, emailText) {
         }
     });
 }
-
-const jwt = require('jsonwebtoken');
-// Login Route AdminTool 
-app.post('/login', bodyParser.json() ,async (req,res) => {
-    const {username, password} = req.body; 
-
-    try {
-        console.log('Suche Benutzer mit Username:', username);
-        const user = await User.findOne({ where:{ username } }); 
-        console.log('Gefundener Benutzer:', user);
-        if(!user) {
-            return res.status(401).json({ message: 'login failed'});
-        }
-        const match = await bcrypt.compare(password, user.password);
-        if(!match) {
-            return res.status(401).json({message: 'login failed'}); 
-
-        }
-        // if valid
-    
-        const token = jwt.sign({ userId: user.id }, 'asiDNLSdjAsdkf555',{expiresIn:'24h'});
-        return res.json({ token });
-    } catch(err) {
-        console.error(err); 
-        res.status(500).json({ message: 'serverError' , error: err.message});
-    }
-});
 
 
 app.listen(4242, () => console.log('Running on port 4242'));
