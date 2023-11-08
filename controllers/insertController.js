@@ -1,12 +1,16 @@
 const emailService = require('./emailService');
-const { Order } = require('../models'); 
+const { Order } = require('../models/models'); 
+const stripe = require('stripe')('sk_test_51NpahnKW38JNXmg0k5GZ56wkE44G9ldI0xZMvm2NHuIbQP8WM7IdvsRKg2oAIpnySrB24bKclSj0H6DGsMQUmWPa00uwWcvMJv');
 
-async function insertRecord(session) {
-    const customerEmail = session.customer_details.email;
-    const customerName = session.customer_details.name;
-    const totalAmount = session.amount_total / 100;
-    const selectedDate = session.metadata.selectedDate;
-    const selectedLocation = session.metadata.selectedLocation;
+
+
+async function insertRecord(session,customerEmail,customerName,totalAmount,selectedLocation,selectedDate) {
+        
+        console.log(customerEmail)
+        console.log(customerName)
+        console.log(totalAmount);
+        console.log(selectedLocation);
+        
 
     stripe.checkout.sessions.listLineItems(session.id, async function (err, lineItems) {
         if (err) {
@@ -20,8 +24,8 @@ async function insertRecord(session) {
                     email: customerEmail, 
                     item: itemsDescription, 
                     total: totalAmount, 
-                    pickupdate: mysqlFormattedDate, 
-                    location: selectedLocation 
+                    pickupdate:mysqlFormattedDate,
+                    location:selectedLocation 
                 });
                 console.log('Order inserted', order);
               //  emailService.sendConfirmationEmail(customerEmail, order);
@@ -30,6 +34,7 @@ async function insertRecord(session) {
             }
         }
     });
+    
 }
 
 module.exports = { insertRecord };
