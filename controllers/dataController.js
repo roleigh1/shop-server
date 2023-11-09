@@ -3,7 +3,7 @@ const { Item, Product, Info } = require('../models');
 
 const getInfo = async (req, res) => {
   try {
-    console.log('fetching infos ...');
+  //  console.log('fetching infos ...');
     const infos = await Info.findAll();
     res.json(infos);
   } catch (err) {
@@ -14,7 +14,7 @@ const getInfo = async (req, res) => {
 
 const getItems = async (req, res) => {
   try {
-    console.log('fetching items ...');
+   // console.log('fetching items ...');
     const items = await Item.findAll();
     res.json(items);
   } catch (err) {
@@ -25,7 +25,7 @@ const getItems = async (req, res) => {
 
 const getProducts = async (req, res) => {
   try {
-    console.log('fetching products ...');
+ //  console.log('fetching products ...');
     const products = await Product.findAll();
     res.json(products);
   } catch (err) {
