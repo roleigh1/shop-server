@@ -6,9 +6,9 @@ const bodyParser = require('body-parser');
 
 const router = express.Router(); 
 
-router.get('/infos', dataController.getInfo);
-router.get('/products',dataController.getItems);
-router.get('/items' , dataController.getItems); 
+router.get('/infos', dataController.getSeasonCards);
+router.get('/products',dataController.getProducts);
+router.get('/items' , dataController.getBestsellerItems); 
 router.post('/create-checkout-session', bodyParser.json(),stripeController.createCheckoutSession);
 router.post('/webhook', express.raw({type: 'application/json'}), stripeController.handleWebhook);
 

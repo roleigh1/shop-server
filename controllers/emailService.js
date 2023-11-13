@@ -1,10 +1,11 @@
 const nodemailer = require('nodemailer');
-const config = require('../config');
+//const config = require('../config');
 
 function generateEmailTemplate(order) {
     // Extract order details for the email
     const { customerName, customerEmail, totalAmount, selectedDate, selectedLocation, lineItems } = order;
-
+    const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
+            
     // Create the rows for each line item in the order
     const tableRows = lineItems.map(item => {
         return `
@@ -37,7 +38,7 @@ function generateEmailTemplate(order) {
                 <div>
                     <strong>Rechnungsdaten</strong><br>
                     ${customerName}<br>
-                    ${CustomerEmail}
+                    ${customerEmail}
                 </div>
             </section>
     
