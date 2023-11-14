@@ -1,6 +1,6 @@
 const emailService = require('./emailService');
 const { Order } = require('../models/models'); 
-const stripe = require('stripe')('sk_test_51NpahnKW38JNXmg0k5GZ56wkE44G9ldI0xZMvm2NHuIbQP8WM7IdvsRKg2oAIpnySrB24bKclSj0H6DGsMQUmWPa00uwWcvMJv');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 
 

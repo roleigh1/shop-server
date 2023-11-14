@@ -1,5 +1,5 @@
 
-const stripe = require('stripe')('sk_test_51NpahnKW38JNXmg0k5GZ56wkE44G9ldI0xZMvm2NHuIbQP8WM7IdvsRKg2oAIpnySrB24bKclSj0H6DGsMQUmWPa00uwWcvMJv');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Decimail = require('decimal.js'); 
 const inserController = require('./insertController');
 
@@ -60,13 +60,12 @@ const createCheckoutSession =   async (req, res) =>  {
   }
 }
 
+const endpointSecret = process.env.ENDPOINT_SECRET; 
 
-const endpointSecret = 'whsec_91c9d54c6ad7e73607868c34061ec1182e340c9155571f9104ab9902b2a7319b';
  
 const handleWebhook = async (request, response) => {
     const sig = request.headers['stripe-signature'];
     let event;
-    console.log('lets go')
     try {
         event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
     } catch (err) {
@@ -80,13 +79,13 @@ const handleWebhook = async (request, response) => {
             console.log("payment successfull");
 
             break;
+
         case "checkout.session.completed":
-          
-       try {
+        try {
         const session = event.data.object;
         const customerEmail = session.customer_details.email;
         const customerName = session.customer_details.name;
-        const totalAmount = session.amount_total / 100; // in Euros for example
+        const totalAmount = session.amount_total / 100; 
 
 
         inserController.insertRecord(session,customerEmail,customerName,totalAmount,selectedLocation,selectedDate);

@@ -15,7 +15,7 @@ async function authDb() {
     }
 }
 authDb();
-const Info = sequelize.define('Info', {
+const SeasonCardsDB = sequelize.define('Info', {
 
     name: {
         type: Sequelize.DataTypes.STRING,
@@ -32,7 +32,7 @@ const Info = sequelize.define('Info', {
 }, {
         tableName:'infos'
     })
-const Item = sequelize.define('Item', {
+const BestsellerItemsDB = sequelize.define('Item', {
     name: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -52,7 +52,7 @@ const Item = sequelize.define('Item', {
 }, {
     tableName: 'items'
 })
-const Product = sequelize.define('Product', {
+const ProductsDB = sequelize.define('Product', {
     // attributes
     name: {
       type: DataTypes.STRING,
@@ -102,25 +102,13 @@ const Product = sequelize.define('Product', {
 });
 
 
-const User = sequelize.define('Admin', {
-    username: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false,
-    },
-    password: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull:false,
-    }
-}, 
-{
-    tableName:'admin',
-    timestamps: false
-});
+
 
 module.exports = {
-    Info,
-    Item,
-    Product,
+    
+    BestsellerItemsDB,
+    SeasonCardsDB,
+    ProductsDB,
     Order,
-    User
+  
 }
