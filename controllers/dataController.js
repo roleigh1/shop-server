@@ -1,4 +1,7 @@
 const { SeasonCardsDB, BestsellerItemsDB, ProductsDB } = require('../models/models')
+
+
+
 const getSeasonCards = async (req, res) => {
   try {
   //  console.log('fetching infos ...');
@@ -33,7 +36,7 @@ const getProducts = async (req, res) => {
 };
 
 module.exports = {
-  getSeasonCards,
+
   getBestsellerItems,
   getProducts,
 };
