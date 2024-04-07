@@ -28,7 +28,7 @@ async function insertRecord(session,customerEmail,customerName,totalAmount,selec
                     location:selectedLocation 
                 });
                 console.log('Order inserted', order);
-              //  emailService.sendConfirmationEmail(customerEmail, order);
+               emailService.sendConfirmationEmail(customerEmail, order);
             } catch (error) {
                 console.error('Error when inserting', error);
             }

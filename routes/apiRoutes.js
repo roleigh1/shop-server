@@ -11,5 +11,4 @@ router.get('/Products',fetchData.getProducts);
 router.get('/BestsellerItems' , fetchData.getBestsellerItems); 
 router.post('/create-checkout-session', bodyParser.json(),stripeController.createCheckoutSession);
 router.post('/webhook', express.raw({type: 'application/json'}), stripeController.handleWebhook);
-
 module.exports = router;

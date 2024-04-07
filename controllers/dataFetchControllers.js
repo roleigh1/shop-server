@@ -2,11 +2,13 @@ const { SeasonCardsDB , BestsellerItemsDB , ProductsDB } = require('../models/mo
 
 const getCardInfo = async (req, res) => {
     const result = await fetchData(SeasonCardsDB, 4, req.query.page);
+
     res.status(200).json(result);
 };
 
 const getBestsellerItems = async (req, res) => {
     const result = await fetchData(BestsellerItemsDB, 4, req.query.page);
+
     res.status(200).json(result);
 };
 

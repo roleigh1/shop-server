@@ -68,38 +68,39 @@ const handleWebhook = async (request, response) => {
     let event;
     try {
         event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+        switch (event.type) {
+            case 'payment_intent.succeeded':
+                const paymentIntentSucceeded = event.data.object;
+    
+                console.log("payment successfull");
+    
+                break;
+    
+            case "checkout.session.completed":
+            try {
+            const session = event.data.object;
+            const customerEmail = session.customer_details.email;
+            const customerName = session.customer_details.name;
+            const totalAmount = session.amount_total / 100; 
+    
+    
+            inserController.insertRecord(session,customerEmail,customerName,totalAmount,selectedLocation,selectedDate);
+            console.log('inserted');
+        
+           } catch (error) {
+            console.error('Error when inserting', error);
+           }
+             break; 
+             default: 
+                    console.log(`Unhandled event type ${event.type}`);
+        }
+    
+        response.json({received: true});
     } catch (err) {
         response.status(400).send(`Webhook Error: ${err.message}`);
-        return;
+        console.error("Error", err);
     }
-    switch (event.type) {
-        case 'payment_intent.succeeded':
-            const paymentIntentSucceeded = event.data.object;
-
-            console.log("payment successfull");
-
-            break;
-
-        case "checkout.session.completed":
-        try {
-        const session = event.data.object;
-        const customerEmail = session.customer_details.email;
-        const customerName = session.customer_details.name;
-        const totalAmount = session.amount_total / 100; 
-
-
-        inserController.insertRecord(session,customerEmail,customerName,totalAmount,selectedLocation,selectedDate);
-        console.log('inserted');
-    
-       } catch (error) {
-        console.error('Error when inserting', error);
-       }
-         break; 
-         default: 
-                console.log(`Unhandled event type ${event.type}`);
-    }
-
-    response.json({received: true});
+   
 }
 
 
