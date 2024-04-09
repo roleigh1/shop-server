@@ -1,5 +1,10 @@
 const nodemailer = require('nodemailer');
-//const config = require('../config');
+const config = require('../config');
+const { google } = require('googleapis');
+const OAuth2 = google.auth.OAuth2; 
+
+const OAuth2_client = new OAuth2(config.clientId, config.clientSecret); 
+OAuth2_client.setCredentials({ refresh_token: config.refreshToken });
 
 function generateEmailTemplate(order) {
   
@@ -89,8 +94,8 @@ function generateEmailTemplate(order) {
     return emailText;
 }
 
-function sendConfirmationEmail(customerEmail, order) {
-    const accessToken = OAuth2_client.getAccessToken();
+function sendConfirmationEmail(customerEmail, order, OAuth2_client) {
+
     const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
@@ -99,7 +104,7 @@ function sendConfirmationEmail(customerEmail, order) {
             clientId: config.clientId,
             clientSecret: config.clientSecret,
             refreshToken: config.refreshToken,
-            accessToken: accessToken
+            accessToken: "ya29.a0Ad52N39anQvIEsI7GP91G0ygK_2hBFIml0SdgwN56UlpBiRKM488uL77yt8RBjX6kN4tFu0fkHHfRUacJVMY0KCnW3w-E9fI-HbZPJ1EWl940MCRaMDjwubJVy97U5G9ddz4ZeVwX-vrZLP4AKiYm5Lbi-NtcNSUILmzaCgYKAcUSARISFQHGX2MiI6oge9Y4RQzMVdw3frpEtg0171"//accessToken
         }
     });
 
