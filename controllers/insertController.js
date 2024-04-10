@@ -18,7 +18,10 @@ async function insertRecord(session,customerEmail,customerName,totalAmount,selec
         } else {
             const itemsDescription = lineItems.data.map(item => `${item.description}:${item.quantity}`).join(", ");
             const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
-            
+            let testItDesc =  lineItems.data.map(item => `${item.description}:${item.quantity}:${item.quantity * item.price.unit_amount} `).join(", ");
+           // console.log("lineItems",lineItems);
+          //  console.log(testItDesc); 
+          //  console.log("lineItems price",lineItems.data[0].price.unit_amount); 
             try {
                 const order = await Order.create({ 
                     email: customerEmail, 
@@ -27,8 +30,8 @@ async function insertRecord(session,customerEmail,customerName,totalAmount,selec
                     pickupdate:mysqlFormattedDate,
                     location:selectedLocation 
                 });
-                console.log('Order inserted', order);
-               emailService.sendConfirmationEmail(customerEmail, order, OAuth2_client);
+                console.log("",itemsDescription);
+               emailService.sendConfirmationEmail(customerEmail, order, OAuth2_client,lineItems);
             } catch (error) {
                 console.error('Error when inserting', error);
             }

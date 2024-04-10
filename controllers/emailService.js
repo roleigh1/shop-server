@@ -6,25 +6,27 @@ const OAuth2 = google.auth.OAuth2;
 const OAuth2_client = new OAuth2(config.clientId, config.clientSecret); 
 OAuth2_client.setCredentials({ refresh_token: config.refreshToken });
 
-function generateEmailTemplate(order) {
+function generateEmailTemplate(order,lineItems) {
   
-    const { id,customerName, customerEmail, totalAmount, selectedDate, selectedLocation, lineItems } = order;
-    const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
-            
+    const { id,customerName, customerEmail, totalAmount, selectedDate, selectedLocation } = order;
+    console.log(order,"inEmail");
+    //const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
+
+    
   
-    const tableRows = lineItems.map(item => {
+    const tableRows = lineItems.data.map(item => {
         return `
             <tr>
                 <td>${item.description}</td>
                 <td>${item.quantity}</td>
-                <td>€ ${(item.amount / 100).toFixed(2)}</td>
-                <td>€ ${(item.amount / 100 * item.quantity).toFixed(2)}</td>
+                <td>€ ${(item.price.unit_amount / 100).toFixed(2)}</td>
+                <td>€ ${(item.price.unit_amount / 100 * item.quantity).toFixed(2)}</td>
             </tr>
         `;
     }).join('');
 
     // Email template
-    const emailText = `
+   const emailText = `
     <!DOCTYPE html>
     <html lang="de">
     <head>
@@ -49,7 +51,7 @@ function generateEmailTemplate(order) {
             </section>
     
             <section style="margin: 20px 0;">
-                <strong>Ihre Bestellung ist am ${mysqlFormattedDate}<br>
+                <strong>Ihre Bestellung ist am ${/*mysqlFormattedDate*/"test"}<br>
                 bei unseren Stand auf dem ${selectedLocation} von 07-12:00 zum abholen bereit.</strong>
               
             </section>
@@ -89,12 +91,13 @@ function generateEmailTemplate(order) {
         </div>
     </body>
     </html>
-    `;
+    ` ;
 
-    return emailText;
+   return emailText;
+    
 }
 
-function sendConfirmationEmail(customerEmail, order, OAuth2_client) {
+function sendConfirmationEmail(customerEmail, order, OAuth2_client,lineItems) {
 
     const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -108,7 +111,7 @@ function sendConfirmationEmail(customerEmail, order, OAuth2_client) {
         }
     });
 
-    const emailText = generateEmailTemplate(order);
+    const emailText = generateEmailTemplate(order,lineItems);
 
     const mailOptions = {
         from: "robinl.leitner1@gmail.com",
@@ -117,7 +120,7 @@ function sendConfirmationEmail(customerEmail, order, OAuth2_client) {
         html: emailText,
         attachments: [{
             filename: 'logo.png',
-            path: '../logo.png',
+            path: './logo.png',
             cid: 'logo' 
         }]
     };
