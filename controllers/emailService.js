@@ -8,10 +8,10 @@ OAuth2_client.setCredentials({ refresh_token: config.refreshToken });
 
 function generateEmailTemplate(order,lineItems) {
   
-    const { id,customerName, customerEmail, totalAmount, selectedDate, selectedLocation } = order;
-    console.log(order,"inEmail");
-    //const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
 
+    console.log(order.dataValues.id,"inEmail");
+    let mysqlFormattedDate = new Date(order.dataValues.pickupdate).toISOString().split('T')[0];
+    const [year, month, day] = mysqlFormattedDate.split('-');
     
   
     const tableRows = lineItems.data.map(item => {
@@ -44,15 +44,14 @@ function generateEmailTemplate(order,lineItems) {
             <section style="margin: 20px 0;">
                 <div>
                     <strong>Rechnungsdaten</strong><br>
-                    Bestellnummer:${id}<br>
-                    ${customerName}<br>
-                    ${customerEmail}
+                    Bestellnummer:${order.dataValues.id}<br>
+                    ${order.dataValues.email}
                 </div>
             </section>
     
             <section style="margin: 20px 0;">
-                <strong>Ihre Bestellung ist am ${/*mysqlFormattedDate*/"test"}<br>
-                bei unseren Stand auf dem ${selectedLocation} von 07-12:00 zum abholen bereit.</strong>
+                <strong>Ihre Bestellung ist am ${day}-${month}-${year}<br>
+                bei unseren Stand auf dem ${order.dataValues.location} von 07-12:00 zum abholen bereit.</strong>
               
             </section>
             <hr size="1.5px" color="black" />
@@ -66,7 +65,7 @@ function generateEmailTemplate(order,lineItems) {
                 </tr>
                 ${tableRows}
             </table>
-            <strong>Gesamtpreis: € ${totalAmount}</strong>
+            <strong>Gesamtpreis: € ${order.dataValues.total}</strong>
             <hr size="1.5px" color="black" />
             <footer style="margin-top: 20px;">
             <section style="margin: 20px 0;">
