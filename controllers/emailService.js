@@ -1,32 +1,35 @@
-const nodemailer = require('nodemailer');
-const config = require('../config');
-const { google } = require('googleapis');
-const OAuth2 = google.auth.OAuth2; 
+const nodemailer = require("nodemailer");
+const config = require("../config");
+const { google } = require("googleapis");
+const OAuth2 = google.auth.OAuth2;
 
-const OAuth2_client = new OAuth2(config.clientId, config.clientSecret); 
+const OAuth2_client = new OAuth2(config.clientId, config.clientSecret);
 OAuth2_client.setCredentials({ refresh_token: config.refreshToken });
 
-function generateEmailTemplate(order,lineItems) {
-  
+function generateEmailTemplate(order, lineItems) {
+  console.log(lineItems, "inEmail");
+  let mysqlFormattedDate = new Date(order.dataValues.pickupdate)
+    .toISOString()
+    .split("T")[0];
+  const [year, month, day] = mysqlFormattedDate.split("-");
 
-    console.log(order.dataValues.id,"inEmail");
-    let mysqlFormattedDate = new Date(order.dataValues.pickupdate).toISOString().split('T')[0];
-    const [year, month, day] = mysqlFormattedDate.split('-');
-    
-  
-    const tableRows = lineItems.data.map(item => {
-        return `
+  const tableRows = lineItems.data.map((item) => {
+      return `
             <tr>
                 <td>${item.description}</td>
                 <td>${item.quantity}</td>
                 <td>€ ${(item.price.unit_amount / 100).toFixed(2)}</td>
-                <td>€ ${(item.price.unit_amount / 100 * item.quantity).toFixed(2)}</td>
+                <td>€ ${(
+                  (item.price.unit_amount / 100) *
+                  item.quantity
+                ).toFixed(2)}</td>
             </tr>
         `;
-    }).join('');
+    })
+    .join("");
 
-    // Email template
-   const emailText = `
+  // Email template
+  const emailText = `
     <!DOCTYPE html>
     <html lang="de">
     <head>
@@ -90,47 +93,48 @@ function generateEmailTemplate(order,lineItems) {
         </div>
     </body>
     </html>
-    ` ;
+    `;
 
-   return emailText;
-    
+  return emailText;
 }
 
-function sendConfirmationEmail(customerEmail, order, OAuth2_client,lineItems) {
-
+function sendConfirmationEmail(customerEmail, order, lineItems) {
+    const accessToken = process.env.ACCESS_TOKEN;
     const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            type: "OAuth2",
-            user: config.user,
-            clientId: config.clientId,
-            clientSecret: config.clientSecret,
-            refreshToken: config.refreshToken,
-            accessToken: "ya29.a0Ad52N39anQvIEsI7GP91G0ygK_2hBFIml0SdgwN56UlpBiRKM488uL77yt8RBjX6kN4tFu0fkHHfRUacJVMY0KCnW3w-E9fI-HbZPJ1EWl940MCRaMDjwubJVy97U5G9ddz4ZeVwX-vrZLP4AKiYm5Lbi-NtcNSUILmzaCgYKAcUSARISFQHGX2MiI6oge9Y4RQzMVdw3frpEtg0171"//accessToken
-        }
-    });
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: config.user,
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+      refreshToken: config.refreshToken,
+      accessToken: accessToken,
+    },
+  });
 
-    const emailText = generateEmailTemplate(order,lineItems);
+  const emailText = generateEmailTemplate(order, lineItems);
 
-    const mailOptions = {
-        from: "robinl.leitner1@gmail.com",
-        to: customerEmail,
-        subject: "Bestellung bei Gärtnerei Leitner",
-        html: emailText,
-        attachments: [{
-            filename: 'logo.png',
-            path: './logo.png',
-            cid: 'logo' 
-        }]
-    };
+  const mailOptions = {
+    from: "robinl.leitner1@gmail.com",
+    to: customerEmail,
+    subject: "Bestellung bei Gärtnerei Leitner",
+    html: emailText,
+    attachments: [
+      {
+        filename: "logo.png",
+        path: "./logo.png",
+        cid: "logo",
+      },
+    ],
+  };
 
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log("Email sent:", info.response);
-        }
-    });
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log("Email sent:", info.response);
+    }
+  });
 }
 
 module.exports = { sendConfirmationEmail };

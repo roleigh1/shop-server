@@ -5,12 +5,10 @@ const { OAuth2_client } = require('../config');
 
 
 async function insertRecord(session,customerEmail,customerName,totalAmount,selectedLocation,selectedDate) {
-        
-        console.log(customerEmail)
-        console.log(customerName)
-        console.log(totalAmount);
-        console.log(selectedLocation);
-        
+    console.log(customerEmail)
+    console.log(customerName)
+    console.log(totalAmount);
+    console.log(selectedLocation);
 
     stripe.checkout.sessions.listLineItems(session.id, async function (err, lineItems) {
         if (err) {
@@ -18,26 +16,22 @@ async function insertRecord(session,customerEmail,customerName,totalAmount,selec
         } else {
             const itemsDescription = lineItems.data.map(item => `${item.description}:${item.quantity}`).join(", ");
             const mysqlFormattedDate = new Date(selectedDate).toISOString().split('T')[0];
-            let testItDesc =  lineItems.data.map(item => `${item.description}:${item.quantity}:${item.quantity * item.price.unit_amount} `).join(", ");
-           // console.log("lineItems",lineItems);
-          //  console.log(testItDesc); 
-          //  console.log("lineItems price",lineItems.data[0].price.unit_amount); 
             try {
                 const order = await Order.create({ 
                     email: customerEmail, 
                     item: itemsDescription, 
                     total: totalAmount, 
-                    pickupdate:mysqlFormattedDate,
-                    location:selectedLocation 
+                    pickupdate: mysqlFormattedDate,
+                    location: selectedLocation 
                 });
-                console.log("",itemsDescription);
-               emailService.sendConfirmationEmail(customerEmail, order, OAuth2_client,lineItems);
+
+                emailService.sendConfirmationEmail(customerEmail, order, lineItems); 
             } catch (error) {
                 console.error('Error when inserting', error);
             }
         }
     });
-    
 }
+
 
 module.exports = { insertRecord };
