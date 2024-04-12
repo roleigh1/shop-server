@@ -13,7 +13,7 @@ const getBestsellerItems = async (req, res) => {
 };
 
 const getProducts = async (req, res) => {
-    const result = await fetchData(ProductsDB,24, req.query.page);
+    const result = await fetchData(ProductsDB,30, req.query.page);
     res.status(200).json(result);
    
 };
